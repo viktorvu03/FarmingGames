@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "792784215965",
+    "firebase_url": "https://farminggames2d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "farminggames2d",
+    "storage_bucket": "farminggames2d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:792784215965:android:f8e9d4bc97755030f71974",
+        "android_client_info": {
+          "package_name": "com.farming.game2d"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "792784215965-eajbvftq40ja6ad3f7vjpsnc1hpk96sk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPbFbG1VRWiRRE-X405E8EGBXdkKbrWVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "792784215965-eajbvftq40ja6ad3f7vjpsnc1hpk96sk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
