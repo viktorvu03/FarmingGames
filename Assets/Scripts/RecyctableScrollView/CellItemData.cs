@@ -8,7 +8,10 @@ public class CellItemData : MonoBehaviour, ICell
 {
     //UI 
     public Text nameLabel;
-    public Text desLabel;
+    public Text quantity;
+    
+    public Image Image;
+    public Sprite Sprite;
 
     //Model 
     private InvenItems _contactInfo;
@@ -19,6 +22,7 @@ public class CellItemData : MonoBehaviour, ICell
         _cellIndex = cellIndex;
         _contactInfo = invenItems;
         nameLabel.text = invenItems.Name;
-        desLabel.text = invenItems.Description;
+        quantity.text = invenItems.Quantity.ToString();
+        Image.sprite = Sprite;
     }
 }

@@ -106,6 +106,8 @@ namespace PolyAndCode.UI
             m_ContentStartPosition += _recyclingSystem.OnValueChangedListener(dir);
             _prevAnchoredPos = content.anchoredPosition;
         }
+        
+        
 
         /// <summary>
         ///Reloads the data. Call this if a new datasource is assigned.
@@ -132,7 +134,9 @@ namespace PolyAndCode.UI
                 _prevAnchoredPos = content.anchoredPosition;
             }
         }
-
+        
+        
+        
         /*
         #region Testing
         private void OnDrawGizmos()

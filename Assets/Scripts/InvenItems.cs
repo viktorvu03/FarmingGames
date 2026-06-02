@@ -6,16 +6,17 @@ using Newtonsoft.Json;
 public class InvenItems
 {
     public string Name {get; set;}
-    public string Description {get; set;}
+    
+    public int Quantity {get; set;}
 
     public InvenItems()
     {
     }
 
-    public InvenItems(string name, string description)
+    public InvenItems(string name, int quantity)
     {
         Name = name;
-        Description = description;
+        Quantity = quantity;
     }
 
     public override string ToString()

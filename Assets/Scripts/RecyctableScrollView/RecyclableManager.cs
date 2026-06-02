@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using PolyAndCode.UI;
 using TMPro;
 using UnityEngine;
+using Firebase.Database;
+using Firebase;
 
 public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDataSource
 {
@@ -13,15 +15,40 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
     private int _dataLength;
 
     public GameObject inventory;
- 
+
+    private FirebaseDatabaseManager dataDatabaseManager;
+
+    public UsernameWizard usernameWizard;
+    
+    public RecyclableInventoryManager(List<InvenItems> _invenItems)
+    {
+        this._invenItems = _invenItems;
+    }
+    public RecyclableInventoryManager()
+    {
+        
+    }
+    
+    public List<InvenItems> GetInventoryDataForSave()
+    {
+        return _invenItems;
+    }
+    
+    private DatabaseReference _reference;
+    
     //Dummy data List 
-    private List<InvenItems> _invenItems = new List<InvenItems>(); 
+    public List<InvenItems> _invenItems = new List<InvenItems>(); 
  
     //Recyclable scroll rect's data source must be assigned in Awake. 
     private void Awake() 
-    { 
+    {
+        dataDatabaseManager = GameObject.Find("DatabaseManager").GetComponent<FirebaseDatabaseManager>();
+        FirebaseApp app = FirebaseApp.DefaultInstance;
+        _reference = FirebaseDatabase.DefaultInstance.RootReference;
         //InitData(); 
         _recyclableScrollRect.DataSource = this; 
+        Vector3 crrPosInven = inventory.GetComponent<RectTransform>().anchoredPosition;
+        inventory.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 1000, 0);
     } 
  
     #region DATA-SOURCE 
@@ -49,12 +76,16 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
     public void Start()
     {
         List<InvenItems> listItems = new List<InvenItems>();
-        for (int i = 0; i < 50; i++)
+        // for (int i = 0; i < 50; i++)
+        // {
+        //     InvenItems item = new InvenItems();
+        //     item.Name = $"InvenItem_{i}";
+        //     item.Description = $"InvenItem_{i}";
+        //     listItems.Add(item);
+        // }
+        if (LoadDataManager.userInGame.InvenItems != null)
         {
-            InvenItems item = new InvenItems();
-            item.Name = $"InvenItem_{i}";
-            item.Description = $"InvenItem_{i}";
-            listItems.Add(item);
+            listItems = LoadDataManager.userInGame.InvenItems;
         }
         _invenItems = listItems;
         _recyclableScrollRect.ReloadData();
@@ -62,12 +93,12 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
 
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            InvenItems item = new InvenItems("InvenItem_Demo","InvenDesc_Demo");
-            _invenItems.Add(item);
-            _recyclableScrollRect.ReloadData();
-        }
+        // if (Input.GetKeyDown(KeyCode.L))
+        // {
+        //     InvenItems item = new InvenItems("InvenItem_Demo","InvenDesc_Demo");
+        //     _invenItems.Add(item);
+        //     _recyclableScrollRect.ReloadData();
+        // }
         
         if (Input.GetKeyDown(KeyCode.B))
         {
@@ -80,8 +111,57 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
     
     public void AddInventory(InvenItems item)
     {
+        foreach (InvenItems invItems in _invenItems)
+        {
+            if (invItems.Name == item.Name)
+            {
+                invItems.Quantity++;
+                _recyclableScrollRect.ReloadData();
+                LoadDataManager.userInGame.InvenItems = _invenItems;
+                dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
+                return;
+            }
+        }
         _invenItems.Add(item);
+        LoadDataManager.userInGame.InvenItems = _invenItems;
+        dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
         _recyclableScrollRect.ReloadData();
     }
+    
+    public void SellItem(int quanlity)
+    {
+        
+            foreach (InvenItems invItems in _invenItems)
+            {
+                // Kiểm tra đúng tên vật phẩm và số lượng bán hợp lệ
+                if (invItems.Name == "Thóc" && quanlity <= invItems.Quantity)
+                {
+                    // 1. Cộng tiền cho người chơi (cả 2 trường hợp đều được cộng tiền như nhau)
+                    LoadDataManager.userInGame.Gold += quanlity * 50;
+                    // 2. Xử lý số lượng trong túi đồ
+                    if (quanlity < invItems.Quantity)
+                    {
+                        invItems.Quantity -= quanlity;
+                    }
+                    else if (quanlity == invItems.Quantity)
+                    {
+                        _invenItems.Remove(invItems);
+                    }
+                    LoadDataManager.userInGame.InvenItems = _invenItems;
+                    dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId, LoadDataManager.userInGame.ToString());
+        
+                    _recyclableScrollRect.ReloadData(); // Cập nhật lại UI vì số lượng list đã thay đổi
+                    usernameWizard.ReloadUI();
+                    return; 
+                }
+            }
+    }
+    
+    
 
+    public int GetLength()
+    {
+        if (_invenItems == null) return 0;
+        return _invenItems.Count;
+    }
 }

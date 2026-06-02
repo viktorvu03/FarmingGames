@@ -24,9 +24,9 @@ public class FirebaseDatabaseManager : MonoBehaviour
    //    ReadDatabase("123");
    // }
 
-   public void WriteDatabase(string id, string message)
+   public void WriteDatabase(string path, string message)
    {
-      _reference.Child("Users").Child(id).SetValueAsync(message).ContinueWithOnMainThread(task =>
+      _reference.Child(path).SetValueAsync(message).ContinueWithOnMainThread(task =>
       {
          if (task.IsFaulted)
          {

@@ -27,6 +27,9 @@ public class FirebaseLoginManager : MonoBehaviour
    public GameObject registerForm;
    
    FirebaseAuth auth;
+   
+   private FirebaseDatabaseManager databaseManager;
+   
 
    void Start()
    {
@@ -51,6 +54,8 @@ public class FirebaseLoginManager : MonoBehaviour
             SwitchForm();
          }
       );
+      
+      databaseManager = GetComponent<FirebaseDatabaseManager>();
    }
 
    public void SwitchForm()
@@ -79,7 +84,18 @@ public class FirebaseLoginManager : MonoBehaviour
          if (task.IsCompleted)
          {
             Debug.Log("Registration Completed");
+
+            Map mapInGame = new Map();
+            List<InvenItems> lst = new List<InvenItems>();
+            User userInGame = new User("", 100, 50, mapInGame,lst);
             
+            FirebaseUser user = task.Result.User;
+            
+            databaseManager.WriteDatabase("Users/" + user.UserId, userInGame.ToString());
+            
+            LoadingManager.NextScene = "PlayScene";
+            SceneManager.LoadScene("LoadingScene");
+
          }
       });
    }
@@ -105,9 +121,9 @@ public class FirebaseLoginManager : MonoBehaviour
          {
             Debug.Log("Login Completed");
             FirebaseUser user = task.Result.User;
-            
             //Chuyển màn chơi sau khi đăng nhập thành công
-            SceneManager.LoadScene("PlayScene");
+            LoadingManager.NextScene = "PlayScene";
+            SceneManager.LoadScene("LoadingScene");
          }
       });
    }
