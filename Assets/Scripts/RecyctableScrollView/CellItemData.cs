@@ -11,7 +11,8 @@ public class CellItemData : MonoBehaviour, ICell
     public Text quantity;
     
     public Image Image;
-    public Sprite Sprite;
+    public Sprite SpriteRice;
+    public Sprite SpriteSprout;
 
     //Model 
     private InvenItems _contactInfo;
@@ -23,6 +24,14 @@ public class CellItemData : MonoBehaviour, ICell
         _contactInfo = invenItems;
         nameLabel.text = invenItems.Name;
         quantity.text = invenItems.Quantity.ToString();
-        Image.sprite = Sprite;
+        if (invenItems.Id==1)
+        {
+            Image.sprite = SpriteRice;
+        }
+        else
+        {
+            Image.sprite = SpriteSprout;
+        }
+        
     }
 }

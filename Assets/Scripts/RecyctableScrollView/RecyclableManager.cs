@@ -109,13 +109,13 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         
     }
     
-    public void AddInventory(InvenItems item)
+    public void AddInventory(InvenItems item,int quanlity)
     {
         foreach (InvenItems invItems in _invenItems)
         {
-            if (invItems.Name == item.Name)
+            if (invItems.Id == item.Id)
             {
-                invItems.Quantity++;
+                invItems.Quantity += quanlity;
                 _recyclableScrollRect.ReloadData();
                 LoadDataManager.userInGame.InvenItems = _invenItems;
                 dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
@@ -134,7 +134,7 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
             foreach (InvenItems invItems in _invenItems)
             {
                 // Kiểm tra đúng tên vật phẩm và số lượng bán hợp lệ
-                if (invItems.Name == "Thóc" && quanlity <= invItems.Quantity)
+                if (invItems.Id == 1 && quanlity <= invItems.Quantity)
                 {
                     // 1. Cộng tiền cho người chơi (cả 2 trường hợp đều được cộng tiền như nhau)
                     LoadDataManager.userInGame.Gold += quanlity * 50;
@@ -155,6 +155,76 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
                     return; 
                 }
             }
+    }
+    
+    public void BuyItem(int quanlity, int sproutId)
+    {
+        int price = 0;
+        if (sproutId == 2)
+        {
+            price = 10;
+        }
+        else if (sproutId == 3)
+        {
+            price = 20;
+        }
+        else
+        {
+            price = 30;
+        }
+        
+        int moneyCanBuy = price * quanlity;
+        int userGold = LoadDataManager.userInGame.Gold;
+        if(moneyCanBuy <= userGold)
+        {
+            InvenItems itemSprout = new InvenItems();
+            LoadDataManager.userInGame.Gold -= moneyCanBuy;
+            if (sproutId == 4) {
+                itemSprout.Id = 4;
+                itemSprout.GrowthSpeed = 3;
+                itemSprout.Name = "Hạt giống đẹp";
+            }
+            else if (sproutId == 3) {
+                itemSprout.Id = 3;
+                itemSprout.GrowthSpeed = 2;
+                itemSprout.Name = "Hạt giống tốt";
+            }
+            else
+            {
+                itemSprout.Id = 2;
+                itemSprout.GrowthSpeed = 1;
+                itemSprout.Name = "Hạt giống thường";
+            }
+            
+            AddInventory(itemSprout,quanlity);
+        }
+        usernameWizard.ReloadUI();
+    }
+    
+    public void PlantSproud(int id)
+    {
+        foreach (InvenItems invItems in _invenItems)
+        {
+            // Kiểm tra đúng tên vật phẩm và số lượng bán hợp lệ
+            if (invItems.Id == id)
+            {
+                // 2. Xử lý số lượng trong túi đồ
+                if (invItems.Quantity == 1)
+                {
+                    _invenItems.Remove(invItems);
+                }
+                else
+                {
+                    invItems.Quantity -= 1;
+                }
+                LoadDataManager.userInGame.InvenItems = _invenItems;
+                dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId, LoadDataManager.userInGame.ToString());
+        
+                _recyclableScrollRect.ReloadData(); // Cập nhật lại UI vì số lượng list đã thay đổi
+                usernameWizard.ReloadUI();
+                return; 
+            }
+        }
     }
     
     
