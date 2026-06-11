@@ -12,7 +12,7 @@ public class UsernameWizard : MonoBehaviour
     public Text usernameText;
     public Text gold;
     public Text diamond;
-    public TitleMapManager titleMapManager;
+    public TileMapManager titleMapManager;
     
     private FirebaseDatabaseManager databaseManager;
     

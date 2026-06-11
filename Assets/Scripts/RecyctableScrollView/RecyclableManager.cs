@@ -109,13 +109,13 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         
     }
     
-    public void AddInventory(InvenItems item,int quanlity)
+    public void AddInventory(InvenItems item)
     {
         foreach (InvenItems invItems in _invenItems)
         {
             if (invItems.Id == item.Id)
             {
-                invItems.Quantity += quanlity;
+                invItems.Quantity += item.Quantity;
                 _recyclableScrollRect.ReloadData();
                 LoadDataManager.userInGame.InvenItems = _invenItems;
                 dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
@@ -128,7 +128,7 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         _recyclableScrollRect.ReloadData();
     }
     
-    public void SellItem(int quanlity)
+    public void SellItem(int quanlity, out bool isSuccess)
     {
         
             foreach (InvenItems invItems in _invenItems)
@@ -136,6 +136,7 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
                 // Kiểm tra đúng tên vật phẩm và số lượng bán hợp lệ
                 if (invItems.Id == 1 && quanlity <= invItems.Quantity)
                 {
+                    isSuccess = true;
                     // 1. Cộng tiền cho người chơi (cả 2 trường hợp đều được cộng tiền như nhau)
                     LoadDataManager.userInGame.Gold += quanlity * 50;
                     // 2. Xử lý số lượng trong túi đồ
@@ -155,9 +156,10 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
                     return; 
                 }
             }
+            isSuccess = false;
     }
     
-    public void BuyItem(int quanlity, int sproutId)
+    public void BuyItem(int quanlity, int sproutId, out bool isSuccess)
     {
         int price = 0;
         if (sproutId == 2)
@@ -183,22 +185,30 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
                 itemSprout.Id = 4;
                 itemSprout.GrowthSpeed = 3;
                 itemSprout.Name = "Hạt giống đẹp";
+                itemSprout.Quantity = quanlity;
             }
             else if (sproutId == 3) {
                 itemSprout.Id = 3;
                 itemSprout.GrowthSpeed = 2;
                 itemSprout.Name = "Hạt giống tốt";
+                itemSprout.Quantity = quanlity;
             }
             else
             {
                 itemSprout.Id = 2;
                 itemSprout.GrowthSpeed = 1;
                 itemSprout.Name = "Hạt giống thường";
+                itemSprout.Quantity = quanlity;
             }
-            
-            AddInventory(itemSprout,quanlity);
+            isSuccess = true;
+            AddInventory(itemSprout);
+        }
+        else
+        {
+            isSuccess = false;
         }
         usernameWizard.ReloadUI();
+        
     }
     
     public void PlantSproud(int id)

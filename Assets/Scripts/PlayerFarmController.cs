@@ -28,7 +28,7 @@ public class PlayerFarmController : MonoBehaviour
     public TileBase tb_Forest;
     public TileBase tb_Sprout;
     
-    public TitleMapManager tilemapManager;
+    public TileMapManager tilemapManager;
     
     public List<TileBase> lstTb_Rice;
 
@@ -47,9 +47,11 @@ public class PlayerFarmController : MonoBehaviour
     public InputField BuyInput;
     public Button AcceptBuy;
     public GameObject QuanlityBuy;
+
+    [SerializeField] private RecyclableInventoryManager _recyclableScrollRect;
     
     [SerializeField] 
-    private RecyclableInventoryManager _recyclableScrollRect;
+    private MessageBox _messageBox;
     // Start is called before the first frame update
     void Start()
     {
@@ -65,13 +67,22 @@ public class PlayerFarmController : MonoBehaviour
                 {
                     if (quanlitySell > 0)
                     {
-                        _recyclableScrollRect.SellItem(quanlitySell);
+                        bool isSuccess;
+                        _recyclableScrollRect.SellItem(quanlitySell, out isSuccess);
+                        if (isSuccess)
+                        {
+                            _messageBox.ShowPopup("Bán thành công");
+                        }
+                        else
+                        {
+                            
+                            _messageBox.ShowPopup("Bán thất bại");
+
+                        }
+                            
                     }
                 }
-                else
-                {
-                    
-                }
+                
                 QuanlitySell.SetActive(false);
             }
         );
@@ -95,21 +106,6 @@ public class PlayerFarmController : MonoBehaviour
             state =  ButtonState.nice;
         });
         
-        Accept.onClick.AddListener(() =>
-            {
-                string inputText = SellInput.text;
-                if (int.TryParse(inputText, out int quanlitySell))
-                {
-                    if (quanlitySell > 0)
-                    {
-                        _recyclableScrollRect.SellItem(quanlitySell);
-                    }
-                }
-
-                QuanlitySell.SetActive(false);
-            }
-        );
-        
         AcceptBuy.onClick.AddListener(() =>
             {
                 string inputText = BuyInput.text;
@@ -130,7 +126,17 @@ public class PlayerFarmController : MonoBehaviour
                         {
                             sproutId = 4;
                         }
-                        _recyclableScrollRect.BuyItem(quanlityBuy, sproutId);
+
+                        bool isSuccess;
+                        _recyclableScrollRect.BuyItem(quanlityBuy, sproutId,out isSuccess);
+                        if (isSuccess)
+                        {
+                            _messageBox.ShowPopup("Mua thành công");
+                        }
+                        else
+                        {
+                            _messageBox.ShowPopup("Mua thất bại");
+                        }
                     }
                 }
                 state = ButtonState.none;
@@ -212,7 +218,7 @@ public class PlayerFarmController : MonoBehaviour
                     _recyclableScrollRect.PlantSproud(selectedSeed.Id);
                     // Khởi chạy Coroutine trồng cây
                     StartCoroutine(GrowPlant(cellPos, tm_Forest, lstTb_Rice, selectedSeed.GrowthSpeed));
-                    tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Forest);
+                    tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Plants);
                 }
             }
         }
@@ -249,7 +255,7 @@ public class PlayerFarmController : MonoBehaviour
 
                 itemSprout.Name = qualityName; 
                 itemSprout.Quantity = 1;
-                _recyclableScrollRect.AddInventory(itemSprout,1);
+                _recyclableScrollRect.AddInventory(itemSprout);
                 // 1. RANDOM CHẤT LƯỢNG (Ví dụ: 70% Thường, 20% Tốt, 10% Thượng Hạng)
                
                 
@@ -269,7 +275,7 @@ public class PlayerFarmController : MonoBehaviour
                 itemRice.Name = "Lúa";
                 itemRice.Quantity = 1;
                 itemRice.GrowthSpeed = 1;
-                _recyclableScrollRect.AddInventory(itemRice,1 );
+                _recyclableScrollRect.AddInventory(itemRice);
                 tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Grass);
                 
             }

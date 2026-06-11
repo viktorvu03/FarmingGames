@@ -9,7 +9,7 @@ public enum State
 {
     Ground,
     Grass,
-    Forest,
+    Plants,
     Sprout
 }
 
@@ -17,15 +17,15 @@ public class TileMapDetail
 {
     public int x { get; set; }
     public int y { get; set; }
-    public State titlemapState { get; set; }
+    public State tilemapState { get; set; }
     
     public DateTime growTime { get; set; }
 
-    public TileMapDetail(int x, int y, State titlemapState, DateTime growTime)
+    public TileMapDetail(int x, int y, State tilemapState, DateTime growTime)
     {
         this.x = x;
         this.y = y;
-        this.titlemapState = titlemapState;
+        this.tilemapState = tilemapState;
         this.growTime = growTime;
     }
 

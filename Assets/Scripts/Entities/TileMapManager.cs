@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class TitleMapManager : MonoBehaviour
+public class TileMapManager : MonoBehaviour
 {
    public Tilemap tm_Ground;
    public Tilemap tm_Grass;
@@ -53,34 +53,44 @@ public class TitleMapManager : MonoBehaviour
       int maxX = tm_Ground.cellBounds.max.x;
       int midX = minX + (maxX - minX) / 2;
       
+      
+      //Scale (Độ thu phóng): Càng nhỏ thì các "cụm" tài nguyên càng to và mượt.
+      float scale = 0.15f; 
+    
+      // Offset (Độ lệch / Seed): Perlin Noise luôn trả về cùng một giá trị cho cùng một tọa độ.
+      // Việc cộng thêm offset ngẫu nhiên giúp mỗi lần tạo map sẽ ra một hình thù khác nhau (Random Seed) nên mỗi người chơi là một map khác nhau.
+      float offsetX = UnityEngine.Random.Range(0f, 100000f);
+      float offsetY = UnityEngine.Random.Range(0f, 100000f);
+    
+      // Threshold (Ngưỡng): Giới hạn để quyết định tạo Sprout hay Grass.
+      // Ví dụ: < 0.3f (khoảng 30% diện tích) sẽ là Sprout.
+      float threshold = 0.3f; 
+
       for (int x = minX; x < midX; x++)
       {
          for (int y = tm_Ground.cellBounds.min.y; y < tm_Ground.cellBounds.max.y; y++)
          {
-            // PCG cho nửa trái: Random giữa Grass và Sprout
-            // Sử dụng UnityEngine.Random.value (trả về giá trị từ 0.0 đến 1.0)
-            // Nếu giá trị < 0.2 (20% tỷ lệ), thì tạo Sprout. Ngược lại tạo Grass.
-            State randomState = (UnityEngine.Random.value < 0.2f) ? State.Sprout : State.Grass;
-            TileMapDetail tm_detail = new TileMapDetail(x, y, randomState, DateTime.Now);
+            // Tính toán tọa độ đầu vào cho hàm Perlin Noise
+            float xCoord = (x + offsetX) * scale;
+            float yCoord = (y + offsetY) * scale;
+
+            // Lấy giá trị nhiễu (luôn nằm trong khoảng từ 0.0 đến 1.0)
+            float perlinValue = Mathf.PerlinNoise(xCoord, yCoord);
+
+            // Sinh trạng thái dựa trên ngưỡng (Threshold)
+            State generatedState = (perlinValue < threshold) ? State.Sprout : State.Grass;
+            
+            TileMapDetail tm_detail = new TileMapDetail(x, y, generatedState, DateTime.Now);
             tileMapDetails.Add(tm_detail);
          }
       }
       
-      for (int x = midX; x < maxX; x++)
-      {
-         for (int y = tm_Ground.cellBounds.min.y; y < tm_Ground.cellBounds.max.y; y++)
-         {
-            // Nửa trái tạo mới toàn bộ là Grass
-            TileMapDetail tm_detail = new TileMapDetail(x, y, State.Grass, DateTime.Now);
-            tileMapDetails.Add(tm_detail);
-         }
-      }
-      //
-      // for (int x = tm_Ground.cellBounds.min.x; x < tm_Ground.cellBounds.max.x; x++)
+      // for (int x = midX; x < maxX; x++)
       // {
       //    for (int y = tm_Ground.cellBounds.min.y; y < tm_Ground.cellBounds.max.y; y++)
       //    {
-      //       TileMapDetail tm_detail = new TileMapDetail(x,y,State.Grass,DateTime.Now);
+      //       // Nửa trái tạo mới toàn bộ là Grass
+      //       TileMapDetail tm_detail = new TileMapDetail(x, y, State.Grass, DateTime.Now);
       //       tileMapDetails.Add(tm_detail);
       //    }
       // }
@@ -97,28 +107,16 @@ public class TitleMapManager : MonoBehaviour
    public void TilemapDetailToTileBase(TileMapDetail tileMapDetail)
    {
       Vector3Int cellPos = new Vector3Int(tileMapDetail.x,tileMapDetail.y,0);
-      if (tileMapDetail.titlemapState == State.Ground)
+      if (tileMapDetail.tilemapState == State.Ground)
       {
          tm_Grass.SetTile(cellPos,null);
          tm_Forest.SetTile(cellPos,null);
       }
-      else if (tileMapDetail.titlemapState == State.Grass)
+      else if (tileMapDetail.tilemapState == State.Grass)
       {
          tm_Forest.SetTile(cellPos,null);
-         
-         
-         // if(cellPos == new Vector3Int(1, 1, 0))
-         // {
-         //    tm_Grass.SetTile(cellPos,null);
-         //    tm_Forest.SetTile(cellPos,tb_Forest);
-         // }else
-         // {
-         //    
-         //    tm_Forest.SetTile(cellPos,null);
-         // };
-         
       }
-      else if (tileMapDetail.titlemapState == State.Forest)
+      else if (tileMapDetail.tilemapState == State.Plants)
       {
          double elapsedTime = DateTime.Now.Subtract(tileMapDetail.growTime).TotalSeconds;
          tm_Grass.SetTile(cellPos,null);
@@ -155,7 +153,7 @@ public class TitleMapManager : MonoBehaviour
 
          }
       }
-      else if (tileMapDetail.titlemapState == State.Sprout)
+      else if (tileMapDetail.tilemapState == State.Sprout)
       {
          tm_Sprout.SetTile(cellPos,tb_Sprout);
       }
@@ -177,7 +175,7 @@ public class TitleMapManager : MonoBehaviour
       {
          if (LoadDataManager.userInGame.MapInGame.lstmap[i].x == x && LoadDataManager.userInGame.MapInGame.lstmap[i].y == y)
          {
-            LoadDataManager.userInGame.MapInGame.lstmap[i].titlemapState = state;
+            LoadDataManager.userInGame.MapInGame.lstmap[i].tilemapState = state;
             LoadDataManager.userInGame.MapInGame.lstmap[i].growTime = DateTime.Now;
             dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
          }
