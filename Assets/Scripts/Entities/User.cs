@@ -9,19 +9,19 @@ public class User
     public int Gold { get; set; }
     public int Diamond { get; set; }
     public Map MapInGame { get; set; }
-    public List<InvenItems>  InvenItems { get; set; }
+    public List<InvenItems>  inventoryItems { get; set; }
 
     public User()
     {
     }
 
-    public User(string name, int gold, int diamond, Map mapInGame, List<InvenItems> invenItems)
+    public User(string name, int gold, int diamond, Map mapInGame, List<InvenItems> inventoryItems)
     {
         Name = name;
         Gold = gold;
         Diamond = diamond;
         MapInGame = mapInGame;
-        InvenItems = invenItems;
+        inventoryItems = inventoryItems;
     }
 
     public override string ToString()

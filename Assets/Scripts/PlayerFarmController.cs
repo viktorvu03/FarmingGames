@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using PolyAndCode.UI;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -11,7 +12,7 @@ enum ButtonState
     none,
     normal,
     good,
-    nice
+    house
     
 }
 
@@ -22,11 +23,13 @@ public class PlayerFarmController : MonoBehaviour
     public Tilemap tm_GroundOutSide;
     public Tilemap tm_Forest;
     public Tilemap tm_Sprout;
+    public Tilemap tm_House;
 
     public TileBase tb_Ground;
     public TileBase tb_Grass;
     public TileBase tb_Forest;
     public TileBase tb_Sprout;
+    public TileBase tb_House;
     
     public TileMapManager tilemapManager;
     
@@ -42,7 +45,7 @@ public class PlayerFarmController : MonoBehaviour
     
     public Button BuyNormal;
     public Button BuyGood;
-    public Button BuyNice;
+    public Button BuyHouse;
     
     public InputField BuyInput;
     public Button AcceptBuy;
@@ -100,10 +103,11 @@ public class PlayerFarmController : MonoBehaviour
             
         });
         
-        BuyNice.onClick.AddListener(()=>
+        BuyHouse.onClick.AddListener(()=>
         {
             QuanlityBuy.SetActive(true);
-            state =  ButtonState.nice;
+            state =  ButtonState.house;
+            
         });
         
         AcceptBuy.onClick.AddListener(() =>
@@ -124,11 +128,11 @@ public class PlayerFarmController : MonoBehaviour
                         }
                         else
                         {
-                            sproutId = 4;
+                            sproutId = 5;
                         }
-
+                        
                         bool isSuccess;
-                        _recyclableScrollRect.BuyItem(quanlityBuy, sproutId,out isSuccess);
+                        _recyclableScrollRect.BuyItem(quanlityBuy, sproutId, out isSuccess);
                         if (isSuccess)
                         {
                             _messageBox.ShowPopup("Mua thành công");
@@ -162,7 +166,16 @@ public class PlayerFarmController : MonoBehaviour
             if (title == tb_Grass)
             {
                 tm_Grass.SetTile(cellPos, null);
-                tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Ground);
+                TileMapDetail tileMapDetail = LoadDataManager.userInGame.MapInGame.lstmap.FirstOrDefault(e =>e.x == cellPos.x && e.y == cellPos.y);
+                if (tileMapDetail == null)
+                {
+                    tilemapManager.AddStateForTilemapDetail(cellPos.x, cellPos.y, State.Ground);
+                }
+                else
+                {
+                    tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Ground);
+                }
+                
             }
         }
         
@@ -181,46 +194,41 @@ public class PlayerFarmController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.V))
         {
-            Vector3Int cellPos1 = tm_Ground.WorldToCell(transform.position);
-            TileBase title1 = tm_Forest.GetTile(cellPos1);
+            int selectedId = _recyclableScrollRect.selectedItemId;
+            if (selectedId == -1)
+            {
+                _messageBox.ShowPopup("Hãy chọn hạt giống trong túi");
+                return;
+            }
+
+            Vector3Int cellPos = tm_Ground.WorldToCell(transform.position);
+            TileBase title1 = tm_Forest.GetTile(cellPos);
             if(title1 != null)
                 return;
-            // 1. Tạo một danh sách tạm để chứa các hạt giống hợp lệ ĐANG CÓ trong túi đồv
-            List<InvenItems> validSeedsInBag = new List<InvenItems>();
-
-            foreach (InvenItems invenItems in _recyclableScrollRect._invenItems)
+            InvenItems selectedSeed = _recyclableScrollRect._invenItems.FirstOrDefault(x => x.Id == _recyclableScrollRect.selectedItemId);
+            if (selectedSeed == null)
             {
-                // Kiểm tra nếu đúng ID là 2, 3, hoặc 4
-                if (invenItems.Id == 2 || invenItems.Id == 3 || invenItems.Id == 4)
-                {
-                    // BẮT BUỘC: Kiểm tra thêm điều kiện số lượng hạt đó phải lớn hơn 0
-                    // (Giả sử biến số lượng của bạn là Quantity hoặc số lượng tương tự)
-                    if (invenItems.Quantity > 0)
-                    {
-                        validSeedsInBag.Add(invenItems);
-                    }
-                }
+                _messageBox.ShowPopup("Chọn hạt giống khác");
+                return;
             }
-
-            if (validSeedsInBag.Count > 0)
+            TileBase title = tm_Grass.GetTile(cellPos);
+            TileBase titleOutSide = tm_GroundOutSide.GetTile(cellPos);
+            TileBase titleHouse= tm_House.GetTile(cellPos);
+            if (selectedId == 5 && titleHouse ==null)
             {
-                // Tiến hành ngẫu nhiên chọn ra 1 phần tử trong danh sách hạt giống đang có
-                int randomIndex = Random.Range(0, validSeedsInBag.Count);
-                InvenItems selectedSeed = validSeedsInBag[randomIndex];
-                
-                // 3. Thực hiện logic kiểm tra vị trí đất và trồng cây bằng hạt giống đã chọn
-                Vector3Int cellPos = tm_Ground.WorldToCell(transform.position);
-                TileBase title = tm_Grass.GetTile(cellPos);
-                TileBase titleOutSide = tm_GroundOutSide.GetTile(cellPos);
-
-                if (title == null && titleOutSide == null)
-                {
-                    _recyclableScrollRect.PlantSproud(selectedSeed.Id);
-                    // Khởi chạy Coroutine trồng cây
-                    StartCoroutine(GrowPlant(cellPos, tm_Forest, lstTb_Rice, selectedSeed.GrowthSpeed));
-                    tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Plants);
-                }
+                _recyclableScrollRect.PlantSproud(selectedSeed.Id);
+                tm_House.SetTile(cellPos, tb_House);
+                tilemapManager.AddStateForTilemapDetail(cellPos.x, cellPos.y, State.House);
+                return;
             }
+            if (title == null && titleOutSide == null)
+            {
+                _recyclableScrollRect.PlantSproud(selectedSeed.Id);
+                // Khởi chạy Coroutine trồng cây
+                StartCoroutine(GrowPlant(cellPos, tm_Forest, lstTb_Rice, selectedSeed.GrowthSpeed));
+                tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Plants);
+            }
+            
         }
 		
         if (Input.GetKeyDown(KeyCode.M))
@@ -230,36 +238,31 @@ public class PlayerFarmController : MonoBehaviour
             if (titleSprout == tb_Sprout){
                 tm_Grass.SetTile(cellPos, tb_Grass);
                 tm_Sprout.SetTile(cellPos, null);
-                
+                    
                 
                 InvenItems itemSprout = new InvenItems();
-                float qualityRoll = UnityEngine.Random.value;
+                float lootOffset = 9999f; 
+                float lootScale = 0.15f;
+
+                float xCoord = (cellPos.x + lootOffset) * lootScale;
+                float yCoord = (cellPos.y + lootOffset) * lootScale;
+
+                // Tính toán "Chất lượng đất" tại ĐÚNG ô tọa độ đó
+                float qualityRoll = Mathf.PerlinNoise(xCoord, yCoord);
                 string qualityName = "";
     
-                if (qualityRoll < 0.1f) {
+                if (qualityRoll > 0.5f) {
                     itemSprout.Id = 4;
                     itemSprout.GrowthSpeed = 3;
                     qualityName = "Hạt giống đẹp";
+                    itemSprout.Name = qualityName; 
+                    itemSprout.Quantity = 1;
+                    _recyclableScrollRect.AddInventory(itemSprout);
+                    // 1. RANDOM CHẤT LƯỢNG (Ví dụ: 40% đẹp)
+                    //tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Grass);
                 }
-                else if (qualityRoll < 0.3f) {
-                    itemSprout.Id = 3;
-                    itemSprout.GrowthSpeed = 2;
-                    qualityName = "Hạt giống tốt";
-                }
-                else
-                {
-                    itemSprout.Id = 2;
-                    itemSprout.GrowthSpeed = 1;
-                    qualityName = "Hạt giống thường";
-                }
-
-                itemSprout.Name = qualityName; 
-                itemSprout.Quantity = 1;
-                _recyclableScrollRect.AddInventory(itemSprout);
-                // 1. RANDOM CHẤT LƯỢNG (Ví dụ: 70% Thường, 20% Tốt, 10% Thượng Hạng)
-               
-                
-                tilemapManager.SetStateForTilemapDetail(cellPos.x, cellPos.y, State.Grass);
+                TileMapDetail removeSprout = LoadDataManager.userInGame.MapInGame.lstmap.FirstOrDefault(e =>e.x == cellPos.x && e.y == cellPos.y);
+                tilemapManager.RemoveTilemapDetail(removeSprout);
                 return;
             }
             

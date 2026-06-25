@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using PolyAndCode.UI;
 using TMPro;
 using UnityEngine;
@@ -8,6 +9,11 @@ using Firebase;
 
 public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDataSource
 {
+    [Header("Global Selection Data")]
+    // Biến toàn cục lưu trữ ID của vật phẩm vừa được bấm chọn
+    // Mặc định ban đầu chưa chọn gì thì để là -1
+    public int selectedItemId = -1;
+    
     [SerializeField] 
     RecyclableScrollRect _recyclableScrollRect; 
  
@@ -28,6 +34,8 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
     {
         
     }
+    // Biến Singleton toàn cục để mọi script khác đều gọi được
+    public static RecyclableInventoryManager Instance { get; private set; }
     
     public List<InvenItems> GetInventoryDataForSave()
     {
@@ -42,6 +50,14 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
     //Recyclable scroll rect's data source must be assigned in Awake. 
     private void Awake() 
     {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
         dataDatabaseManager = GameObject.Find("DatabaseManager").GetComponent<FirebaseDatabaseManager>();
         FirebaseApp app = FirebaseApp.DefaultInstance;
         _reference = FirebaseDatabase.DefaultInstance.RootReference;
@@ -83,9 +99,9 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         //     item.Description = $"InvenItem_{i}";
         //     listItems.Add(item);
         // }
-        if (LoadDataManager.userInGame.InvenItems != null)
+        if (LoadDataManager.userInGame.inventoryItems != null)
         {
-            listItems = LoadDataManager.userInGame.InvenItems;
+            listItems = LoadDataManager.userInGame.inventoryItems;
         }
         _invenItems = listItems;
         _recyclableScrollRect.ReloadData();
@@ -109,6 +125,16 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         
     }
     
+    public void SelectItem(int itemId)
+    {
+        if (itemId == -1 || itemId == 1 || _invenItems.FirstOrDefault(x => x.Id == itemId) == null)
+        {
+            
+            return;
+        }
+        selectedItemId = itemId;
+    }
+    
     public void AddInventory(InvenItems item)
     {
         foreach (InvenItems invItems in _invenItems)
@@ -117,13 +143,13 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
             {
                 invItems.Quantity += item.Quantity;
                 _recyclableScrollRect.ReloadData();
-                LoadDataManager.userInGame.InvenItems = _invenItems;
+                LoadDataManager.userInGame.inventoryItems = _invenItems;
                 dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
                 return;
             }
         }
         _invenItems.Add(item);
-        LoadDataManager.userInGame.InvenItems = _invenItems;
+        LoadDataManager.userInGame.inventoryItems = _invenItems;
         dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
         _recyclableScrollRect.ReloadData();
     }
@@ -148,7 +174,7 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
                     {
                         _invenItems.Remove(invItems);
                     }
-                    LoadDataManager.userInGame.InvenItems = _invenItems;
+                    LoadDataManager.userInGame.inventoryItems = _invenItems;
                     dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId, LoadDataManager.userInGame.ToString());
         
                     _recyclableScrollRect.ReloadData(); // Cập nhật lại UI vì số lượng list đã thay đổi
@@ -166,14 +192,15 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         {
             price = 10;
         }
-        else if (sproutId == 3)
+        else if(sproutId == 3)
         {
             price = 20;
         }
         else
         {
-            price = 30;
+            price = 200;
         }
+        
         
         int moneyCanBuy = price * quanlity;
         int userGold = LoadDataManager.userInGame.Gold;
@@ -181,23 +208,24 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
         {
             InvenItems itemSprout = new InvenItems();
             LoadDataManager.userInGame.Gold -= moneyCanBuy;
-            if (sproutId == 4) {
-                itemSprout.Id = 4;
-                itemSprout.GrowthSpeed = 3;
-                itemSprout.Name = "Hạt giống đẹp";
-                itemSprout.Quantity = quanlity;
-            }
-            else if (sproutId == 3) {
+            if (sproutId == 3) {
                 itemSprout.Id = 3;
                 itemSprout.GrowthSpeed = 2;
                 itemSprout.Name = "Hạt giống tốt";
                 itemSprout.Quantity = quanlity;
             }
-            else
+            else if(sproutId == 2)
             {
                 itemSprout.Id = 2;
                 itemSprout.GrowthSpeed = 1;
                 itemSprout.Name = "Hạt giống thường";
+                itemSprout.Quantity = quanlity;
+            }
+            else
+            {
+                itemSprout.Id = 5;
+                itemSprout.GrowthSpeed = 1;
+                itemSprout.Name = "Nhà";
                 itemSprout.Quantity = quanlity;
             }
             isSuccess = true;
@@ -227,7 +255,7 @@ public class RecyclableInventoryManager : MonoBehaviour, IRecyclableScrollRectDa
                 {
                     invItems.Quantity -= 1;
                 }
-                LoadDataManager.userInGame.InvenItems = _invenItems;
+                LoadDataManager.userInGame.inventoryItems = _invenItems;
                 dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId, LoadDataManager.userInGame.ToString());
         
                 _recyclableScrollRect.ReloadData(); // Cập nhật lại UI vì số lượng list đã thay đổi

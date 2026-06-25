@@ -13,7 +13,8 @@ public class FirebaseLoginManager : MonoBehaviour
    public InputField inputEmail;
    public InputField inputPassword;
    public Button registerButton;
-   
+
+   public MessageBox messageBox;
    //Đăng nhập 
    public InputField inputLoginEmail;
    public InputField inputLoginPassword;
@@ -72,13 +73,13 @@ public class FirebaseLoginManager : MonoBehaviour
       {
          if (task.IsCanceled)
          {
-            Debug.Log("Registration Cancelled");
+            messageBox.ShowPopup("Đăng kí bị hủy");
             return;
          }
          if (task.IsFaulted)
          {
-            Debug.Log("Registration Fauled");
-
+            messageBox.ShowPopup("Đăng kí thất bại");
+            return;
          }
 
          if (task.IsCompleted)
@@ -108,18 +109,18 @@ public class FirebaseLoginManager : MonoBehaviour
       {
          if (task.IsCanceled)
          {
-            Debug.Log("Login Cancelled");
+            messageBox.ShowPopup("Đăng nhập bị hủy");
             return;
          }
          if (task.IsFaulted)
          {
-            Debug.Log("Login Fauled");
+            messageBox.ShowPopup("Đăng nhập thất bại");
+            return;
 
          }
 
          if (task.IsCompleted)
          {
-            Debug.Log("Login Completed");
             FirebaseUser user = task.Result.User;
             //Chuyển màn chơi sau khi đăng nhập thành công
             LoadingManager.NextScene = "PlayScene";

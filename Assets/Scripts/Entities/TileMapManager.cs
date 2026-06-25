@@ -1,11 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Firebase.Auth;
 using Firebase;
 using Firebase.Database;
-using Firebase.Extensions;
-using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -15,9 +11,11 @@ public class TileMapManager : MonoBehaviour
    public Tilemap tm_Grass;
    public Tilemap tm_Forest;
    public Tilemap tm_Sprout;
+   public Tilemap tm_House;
    
    public TileBase tb_Forest;
    public TileBase tb_Sprout;
+   public TileBase tb_House;
 
    public List<TileBase> tb_Rice;
    
@@ -52,6 +50,9 @@ public class TileMapManager : MonoBehaviour
       int minX = tm_Ground.cellBounds.min.x;
       int maxX = tm_Ground.cellBounds.max.x;
       int midX = minX + (maxX - minX) / 2;
+      int minY = tm_Ground.cellBounds.min.x;
+      int maxY = tm_Ground.cellBounds.max.x;
+      int midy = minY + (maxY - minY) / 2;
       
       
       //Scale (Độ thu phóng): Càng nhỏ thì các "cụm" tài nguyên càng to và mượt.
@@ -66,7 +67,7 @@ public class TileMapManager : MonoBehaviour
       // Ví dụ: < 0.3f (khoảng 30% diện tích) sẽ là Sprout.
       float threshold = 0.3f; 
 
-      for (int x = minX; x < midX; x++)
+      for (int x = minX; x < midy; x++)
       {
          for (int y = tm_Ground.cellBounds.min.y; y < tm_Ground.cellBounds.max.y; y++)
          {
@@ -80,21 +81,13 @@ public class TileMapManager : MonoBehaviour
             // Sinh trạng thái dựa trên ngưỡng (Threshold)
             State generatedState = (perlinValue < threshold) ? State.Sprout : State.Grass;
             
-            TileMapDetail tm_detail = new TileMapDetail(x, y, generatedState, DateTime.Now);
-            tileMapDetails.Add(tm_detail);
+            if (generatedState == State.Sprout)
+            {
+               TileMapDetail tm_detail = new TileMapDetail(x, y, generatedState, DateTime.Now);
+               tileMapDetails.Add(tm_detail);
+            }
          }
       }
-      
-      // for (int x = midX; x < maxX; x++)
-      // {
-      //    for (int y = tm_Ground.cellBounds.min.y; y < tm_Ground.cellBounds.max.y; y++)
-      //    {
-      //       // Nửa trái tạo mới toàn bộ là Grass
-      //       TileMapDetail tm_detail = new TileMapDetail(x, y, State.Grass, DateTime.Now);
-      //       tileMapDetails.Add(tm_detail);
-      //    }
-      // }
-
       LoadDataManager.userInGame.MapInGame = new Map(tileMapDetails);
       dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
    }
@@ -120,8 +113,6 @@ public class TileMapManager : MonoBehaviour
       {
          double elapsedTime = DateTime.Now.Subtract(tileMapDetail.growTime).TotalSeconds;
          tm_Grass.SetTile(cellPos,null);
-         
-         
          
          if (elapsedTime > 20)
          {
@@ -157,6 +148,10 @@ public class TileMapManager : MonoBehaviour
       {
          tm_Sprout.SetTile(cellPos,tb_Sprout);
       }
+      else if (tileMapDetail.tilemapState == State.House)
+      {
+         tm_House.SetTile(cellPos,tb_House);
+      }
       
    }
 
@@ -166,6 +161,12 @@ public class TileMapManager : MonoBehaviour
       {
          TilemapDetailToTileBase(map.lstmap[i]);
       }
+   }
+
+   public void RemoveTilemapDetail(TileMapDetail tileMapDetail)
+   {
+      LoadDataManager.userInGame.MapInGame.lstmap.Remove(tileMapDetail);
+      dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
    }
 
    public void SetStateForTilemapDetail(int x, int y, State state)
@@ -180,6 +181,12 @@ public class TileMapManager : MonoBehaviour
             dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
          }
       }
-      
+   }
+
+   public void AddStateForTilemapDetail(int x, int y, State state)
+   {
+      TileMapDetail tm_detail = new TileMapDetail(x, y, state, DateTime.Now);
+      LoadDataManager.userInGame.MapInGame.lstmap.Add(tm_detail);
+      dataDatabaseManager.WriteDatabase("Users/" + LoadDataManager.firebaseUser.UserId,LoadDataManager.userInGame.ToString());
    }
 }

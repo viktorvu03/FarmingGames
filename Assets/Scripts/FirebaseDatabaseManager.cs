@@ -17,12 +17,6 @@ public class FirebaseDatabaseManager : MonoBehaviour
       
    }
    
-   // private void Start()
-   // {
-   //    TileMapDetail tileMapDetail = new TileMapDetail(1,1,State.Ground);
-   //    WriteDatabase("123", tileMapDetail.ToString());
-   //    ReadDatabase("123");
-   // }
 
    public void WriteDatabase(string path, string message)
    {

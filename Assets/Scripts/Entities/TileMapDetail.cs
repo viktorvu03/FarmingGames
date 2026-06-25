@@ -10,7 +10,8 @@ public enum State
     Ground,
     Grass,
     Plants,
-    Sprout
+    Sprout,
+    House
 }
 
 public class TileMapDetail
